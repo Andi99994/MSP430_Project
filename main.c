@@ -29,13 +29,13 @@ static void switchRedLEDThread() {
     while(1) {
         switch (displayMode) {
         case 0:
+            temperature = 1000;
             launchpad_showTemperature(temperature, CELSIUS);
-            temperature -= 10;
             scheduler_threadSleep(500);
             break;
         case 1:
+            temperature = 1;
             launchpad_showTemperature(temperature, CELSIUS);
-            temperature += 10;
             launchpad_toggleRedLED();
             scheduler_threadSleep(500);
             break;
@@ -45,6 +45,7 @@ static void switchRedLEDThread() {
             scheduler_threadSleep(1000);
             break;
         default:
+            temperature = 0;
             launchpad_clearDisplay();
             launchpad_toggleRedLED();
             break;

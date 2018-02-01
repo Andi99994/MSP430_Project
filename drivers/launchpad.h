@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <msp430.h>
 #include <intrinsics.h>
-#include "drivers/DisplayDriver.h"
+#include "displayDriver.h"
 
 #define BTN                 1
 #define BTN_PORT_DIR        P1DIR
