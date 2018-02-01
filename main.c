@@ -2,14 +2,31 @@
 #include "scheduler.h"
 #include "semaphor.h"
 
+#define NUMBER_OF_DISPLAY_MODES         3
+
 static void switchRedLEDThread(void);
 static void aliveThread();
 static Semaphor_t prodConsSemaphor;
+static int16_t temperature;
+static uint8_t displayMode;
 
 static void switchRedLEDThread() {
     while(1) {
-        LED_RED_OUT ^= LED_RED_SHIFT;
-        scheduler_threadSleep(500);
+        switch (displayMode) {
+        case 0:
+            break;
+        case 1:
+            launchpad_toggleRedLED();
+            scheduler_threadSleep(500);
+            break;
+        case 2:
+            launchpad_toggleRedLED();
+            scheduler_threadSleep(1000);
+            break;
+        default:
+            launchpad_toggleRedLED();
+            break;
+        }
     }
 }
 
@@ -31,11 +48,15 @@ static void producerThread() {
 static void consumerThread() {
     while(1) {
         semaphor_P(&prodConsSemaphor);
-        LED_RED_DIR ^= LED_RED_SHIFT;
+        displayMode = displayMode < NUMBER_OF_DISPLAY_MODES ? displayMode + 1 : 0;
+        //displayMode %= NUMBER_OF_DISPLAY_MODES;
+        //launchpad_toggleRedLEDEnable();
     }
 }
 
 int main(void) {
+    temperature = 0;
+    displayMode = 0;
     launchpad_init();
     scheduler_init();
     __enable_interrupt();
@@ -46,19 +67,11 @@ int main(void) {
     scheduler_startThread(&consumerThread);
 
     aliveThread();
-    /*uint32_t oldTime = 0;
-    while(1) {
-        uint32_t time = launchpad_getSystemTicks();
-        if(time - oldTime >= 250) {
-            LED_GREEN_OUT ^= (LED_GREEN_SHIFT);
-            oldTime = time;
-        }
-    }*/
 }
 
 static void aliveThread() {
     while(1) {
-        LED_GREEN_OUT ^= (LED_GREEN_SHIFT);
+        launchpad_toggleGreenLED();
         scheduler_threadSleep(500);
     }
 }

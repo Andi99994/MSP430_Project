@@ -5,16 +5,6 @@
 #include <msp430.h>
 #include <intrinsics.h>
 
-#define LED_RED             0
-#define LED_RED_DIR         P1DIR
-#define LED_RED_OUT         P1OUT
-#define LED_RED_SHIFT       (1 << LED_RED)
-
-#define LED_GREEN           7
-#define LED_GREEN_DIR       P9DIR
-#define LED_GREEN_OUT       P9OUT
-#define LED_GREEN_SHIFT     (1 << LED_GREEN)
-
 #define BTN                 1
 #define BTN_PORT_DIR        P1DIR
 #define BTN_PORT_IN         P1IN
@@ -34,5 +24,11 @@
 
 void launchpad_init();
 uint32_t launchpad_getSystemTicks();
+void launchpad_toggleGreenLED();
+void launchpad_toggleRedLED();
+void launchpad_toggleRedLEDEnable();
+void launchpad_setLCD(uint16_t pos, uint16_t digit);
+void launchpad_clearLCD();
+void launchpad_setTemperature(uint16_t tempSensorValue);
 
 #endif /* LAUNCHPAD_H_ */
