@@ -11,14 +11,13 @@
 #include <msp430.h>
 #include <inttypes.h>
 
-#define DISPLAY_CLEAR       LCDCMEMCTL = LCDCLRM
+#define DISPLAY_CLEAR               LCDCMEMCTL = LCDCLRM
 
-typedef int32_t Temperature_t;
+typedef int16_t Temperature_t;
 
 typedef enum {
-    Kelvin,
-    Celsius,
-    Fahrenheit
+    CELSIUS,
+    FAHRENHEIT
 } TemperatureUnit_t;
 
 void display_init(void);

@@ -10,23 +10,42 @@ static Semaphor_t prodConsSemaphor;
 static Temperature_t temperature;
 static uint8_t displayMode;
 
+
+/*
+int32_t temp;
+uint32_t tempAbs;
+uint16_t i;
+
+
+
+temp = 17572 * (int32_t) tempSensorValue;     // fixed point -> all values multiplied by 100
+temp = temp / 65536;
+temp -= 4685;
+
+tempAbs = (uint32_t) temp / 10;     // remove second digit after comma
+*/
+
 static void switchRedLEDThread() {
     while(1) {
         switch (displayMode) {
         case 0:
-            launchpad_showTemperature(temperature, Celsius);
+            launchpad_showTemperature(temperature, CELSIUS);
             temperature -= 10;
             scheduler_threadSleep(500);
             break;
         case 1:
+            launchpad_showTemperature(temperature, CELSIUS);
+            temperature += 10;
             launchpad_toggleRedLED();
             scheduler_threadSleep(500);
             break;
         case 2:
+            launchpad_showTemperature(temperature, FAHRENHEIT);
             launchpad_toggleRedLED();
             scheduler_threadSleep(1000);
             break;
         default:
+            launchpad_clearDisplay();
             launchpad_toggleRedLED();
             break;
         }

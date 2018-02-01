@@ -17,7 +17,6 @@ void launchpad_init() {
     display_init();
     launchpad_initButton();
     launchpad_initTimer();
-    display_showTemperature(0, Celsius);
 }
 
 static void launchpad_initButton() {
@@ -62,5 +61,9 @@ void launchpad_toggleRedLEDEnable() {
 
 void launchpad_showTemperature(Temperature_t temperature, TemperatureUnit_t unit) {
     display_showTemperature(temperature, unit);
+}
+
+void launchpad_clearDisplay(void) {
+    DISPLAY_CLEAR;
 }
 
