@@ -1,38 +1,15 @@
-#include "launchpad.h"
-#include "LEDDriver.h"
+/*
+ * DisplayDriver.c
+ *
+ *  Created on: 01.02.2018
+ *      Author: andre
+ */
 
-static uint32_t gSystemTicks = 0;
+#include "DisplayDriver.h"
 
-static void launchpad_initButton(void);
-static void launchpad_initTimer(void);
-static void launchpad_initLCD(void);
+static void display_showSymbol(uint16_t pos, uint16_t digit);
 
-extern void timerCallback();
-
-void launchpad_init() {
-    WDTCTL = WDTPW | WDTHOLD;  // stop watchdog timer
-    PM5CTL0 &= ~LOCKLPM5; // power manager - turn on module
-
-    led_init();
-    launchpad_initButton();
-    launchpad_initTimer();
-    launchpad_initLCD();
-    launchpad_setTemperature(0);
-}
-
-static void launchpad_initButton() {
-    BTN_PORT_REN |= BTN_SHIFT;
-    BTN_PORT_OUT |= BTN_SHIFT;
-    BTN_PORT_DIR &= ~BTN_SHIFT;
-}
-
-static void launchpad_initTimer() {
-    TA0CTL = TASSEL_2 + MC_1 + ID_0;     // SMCLK/8, upmode
-    TA0CCR0 = 1000;                      // upper limit
-    TA0CCTL0 = CCIE;                    // activate interrupt for Time A0
-}
-
-static void launchpad_initLCD(void){
+void display_init(void){
     LCDCPCTL1 |= LCDS18 | LCDS19;           // pins for digit A1
     LCDCPCTL0 |= LCDS10 | LCDS11;           // pins for digit A2
     LCDCPCTL0 |= LCDS6 | LCDS7 | LCDS8;     // pins for digit A3 (S8 -> dot)
@@ -46,38 +23,11 @@ static void launchpad_initLCD(void){
     LCDCCTL0 |= LCDSON;
     LCDCCTL0 |= LCDON;
 
-    launchpad_clearLCD();
+    DISPLAY_CLEAR;
 }
 
-uint32_t launchpad_getSystemTicks() {
-    return gSystemTicks;
-}
 
-#pragma vector=TIMER0_A0_VECTOR
-__interrupt void TIMER0_A0_ISR_HOOK(void) {
-    static uint16_t count = 0;
-
-    gSystemTicks++;
-    if(count++ >= LAUNCHPAD_TIMER_INTERVAL) {
-        uint16_t c = count;
-        count = 0;
-        timerCallback(c);
-    }
-}
-
-void launchpad_toggleGreenLED() {
-    LED_GREEN_TOGGLE;
-}
-
-void launchpad_toggleRedLED() {
-    LED_RED_TOGGLE;
-}
-
-void launchpad_toggleRedLEDEnable() {
-    LED_RED_TOGGLE_ENABLE;
-}
-
-void launchpad_setLCD(uint16_t pos, uint16_t digit){
+static void display_showSymbol(uint16_t pos, uint16_t digit){
 
     uint8_t digitCode;
 
@@ -134,35 +84,38 @@ void launchpad_setLCD(uint16_t pos, uint16_t digit){
     }
 }
 
-void launchpad_clearLCD(){
-    LCDCMEMCTL = LCDCLRM;
-}
-
 // temperature will be shown on launchpad LCD display in form: ###.# °C
-void launchpad_setTemperature(uint16_t tempSensorValue){
+void display_showTemperature(Temperature_t temperature, TemperatureUnit_t unit){
+    DISPLAY_CLEAR;
+
+    if(temperature < 0) {
+        temperature = -temperature;
+        display_showSymbol(98, 1);
+    }
+
+    unsigned int i = 0;
+    for(i = 4; i>= 1; i--){
+        display_showSymbol(i, temperature % 10);
+        temperature /= 10;
+        if(!temperature){
+            break;
+        }
+    }
+    display_showSymbol(95, 1);        // set decimal point
+    display_showSymbol(99, 1);        // set °C symbol
+
+    /*
     int32_t temp;
     uint32_t tempAbs;
     uint16_t i;
 
-    launchpad_clearLCD();
+
 
     temp = 17572 * (int32_t) tempSensorValue;     // fixed point -> all values multiplied by 100
     temp = temp / 65536;
     temp -= 4685;
 
-    if(temp < 0){
-        temp = -temp;    // as temp cannot be INT32_MIN just changing the sign is safe
-        launchpad_setLCD(98, 1);        // set negative symbol
-    }
     tempAbs = (uint32_t) temp / 10;     // remove second digit after comma
+*/
 
-    for(i = 4; i>= 1; i--){
-        launchpad_setLCD(i, tempAbs % 10);
-        tempAbs /= 10;
-        if(!tempAbs){
-            break;
-        }
-    }
-    launchpad_setLCD(95, 1);        // set decimal point
-    launchpad_setLCD(99, 1);        // set °C symbol
 }

@@ -1,4 +1,4 @@
-#include "launchpad.h"
+#include "drivers/launchpad.h"
 #include "scheduler.h"
 #include "semaphor.h"
 
@@ -7,13 +7,16 @@
 static void switchRedLEDThread(void);
 static void aliveThread();
 static Semaphor_t prodConsSemaphor;
-static int16_t temperature;
+static Temperature_t temperature;
 static uint8_t displayMode;
 
 static void switchRedLEDThread() {
     while(1) {
         switch (displayMode) {
         case 0:
+            launchpad_showTemperature(temperature, Celsius);
+            temperature -= 10;
+            scheduler_threadSleep(500);
             break;
         case 1:
             launchpad_toggleRedLED();
@@ -49,8 +52,6 @@ static void consumerThread() {
     while(1) {
         semaphor_P(&prodConsSemaphor);
         displayMode = displayMode < NUMBER_OF_DISPLAY_MODES ? displayMode + 1 : 0;
-        //displayMode %= NUMBER_OF_DISPLAY_MODES;
-        //launchpad_toggleRedLEDEnable();
     }
 }
 

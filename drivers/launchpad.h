@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <msp430.h>
 #include <intrinsics.h>
+#include "drivers/DisplayDriver.h"
 
 #define BTN                 1
 #define BTN_PORT_DIR        P1DIR
@@ -27,8 +28,6 @@ uint32_t launchpad_getSystemTicks();
 void launchpad_toggleGreenLED();
 void launchpad_toggleRedLED();
 void launchpad_toggleRedLEDEnable();
-void launchpad_setLCD(uint16_t pos, uint16_t digit);
-void launchpad_clearLCD();
-void launchpad_setTemperature(uint16_t tempSensorValue);
+void launchpad_showTemperature(Temperature_t temperature, TemperatureUnit_t unit);
 
 #endif /* LAUNCHPAD_H_ */

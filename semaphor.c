@@ -1,6 +1,6 @@
 #include "scheduler.h"
 #include "semaphor.h"
-#include "launchpad.h"
+#include "drivers/launchpad.h"
 
 static inline void semaphor_enqueue(Semaphor_t* semaphor, ThreadID_t id);
 static inline ThreadID_t semaphor_dequeue(Semaphor_t* semaphor);

@@ -1,5 +1,5 @@
 #include "scheduler.h"
-#include "launchpad.h"
+#include "drivers/launchpad.h"
 
 static Thread_t gThreads[THREADPOOL_SIZE];
 static ThreadID_t gRunningThread = 0;
