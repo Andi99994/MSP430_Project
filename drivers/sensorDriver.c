@@ -1,3 +1,7 @@
+// http://www.simplyembedded.org/tutorials/msp430-i2c-basics/
+
+
+
 #include "sensorDriver.h"
 
 uint8_t byteIndex = 0;
@@ -8,12 +12,9 @@ typedef const uint8_t DeviceAddress_t;
 typedef struct i2c_data {
     const void *tx_buf;
     size_t tx_len;
-    void *rx_buf;
-    size_t rx_len;
 } I2CData_t;
 
 static int sensorDriver_checkI2CAck(void);
-static int sensorDriver_receiveI2C(DeviceAddress_t deviceAddress, uint8_t *buf, size_t nbytes);
 static int sensorDriver_transmitI2C(DeviceAddress_t deviceAdress, const uint8_t *buf, size_t nbytes);
 static int sensorDriver_transferI2C(DeviceAddress_t deviceAddress, I2CData_t *data);
 
@@ -32,7 +33,7 @@ void sensorDriver_initI2C(void) {
 
 int sensorDriver_measureTemperature(void) {
     uint8_t write_cmd[1] = {0xF3};
-    I2CData_t data = { .tx_buf = &write_cmd, .tx_len = 1, .rx_buf = 0, .rx_len = 0 };
+    I2CData_t data = { .tx_buf = &write_cmd, .tx_len = 1 };
 
     int err = sensorDriver_transferI2C(TEMPERATURE_SENSOR_ADDRESS, &data);
     UCB0CTLW0 &= ~UCTR;
@@ -47,52 +48,6 @@ int sensorDriver_checkI2CAck(void) {
         UCB0CTLW0 |= UCTXSTP;         /* Stop the I2C transmission */
         UCB0IFG &= ~UCNACKIFG;        /* Clear the interrupt flag */
         err = -1;                     /* Set the error code */
-    }
-
-    return err;
-}
-
-int sensorDriver_receiveI2C(DeviceAddress_t deviceAddress, uint8_t *buf, size_t nbytes) {
-    int err = 0;
-
-    /* Send the start and wait */
-    UCB0CTLW0 &= ~UCTR;
-    UCB0CTLW0 |= UCTXSTT;
-
-    /* Wait for the start condition to be sent */
-    while (UCB0CTLW0 & UCTXSTT);
-
-    /*
-     * If there is only one byte to receive, then set the stop
-     * bit as soon as start condition has been sent
-     */
-    if (nbytes == 1) {
-        UCB0CTLW0 |= UCTXSTP;
-    }
-
-    /* Check for ACK */
-    err = sensorDriver_checkI2CAck();
-
-    /* If no error and bytes left to receive, receive the data */
-    while ((err == 0) && (nbytes > 0)) {
-        /* Wait for the data */
-        while ((UCB0IFG & UCRXIFG0) == 0){
-            if( (UCB0IFG & UCNACKIFG) ){
-                //UCB0CTLW0 |= UCTXSTT;
-            }
-        }
-
-        *buf = UCB0RXBUF;
-        buf++;
-        nbytes--;
-
-        /*
-         * If there is only one byte left to receive
-         * send the stop condition
-         */
-        if (nbytes == 1) {
-            UCB0CTLW0 |= UCTXSTP;
-        }
     }
 
     return err;
@@ -130,18 +85,10 @@ int sensorDriver_transmitI2C(DeviceAddress_t deviceAddress, const uint8_t *buf, 
 
 int sensorDriver_transferI2C(DeviceAddress_t deviceAddress, I2CData_t *data) {
     int err = 0;
+    UCB0I2CSA = deviceAddress;      /* Set the slave device address */
 
-    /* Set the slave device address */
-    UCB0I2CSA = deviceAddress;
-
-    /* Transmit data if there is any */
-    if (data->tx_len > 0) {
+    if (data->tx_len > 0) {         /* Transmit data if there is any */
         err = sensorDriver_transmitI2C(deviceAddress, (const uint8_t *) data->tx_buf, data->tx_len);
-    }
-
-    /* Receive data if there is any */
-    if ((err == 0) && (data->rx_len > 0)) {
-        err = sensorDriver_receiveI2C(deviceAddress, (uint8_t *) data->rx_buf, data->rx_len);
     }
 
     return err;
@@ -154,7 +101,6 @@ __interrupt void USCI_B0_ISR(void)
   {
     case USCI_NONE:          break;         // Vector 0: No interrupts
     case USCI_I2C_UCALIFG:   break;         // Vector 2: ALIFG
-
     case USCI_I2C_UCNACKIFG:                // Vector 4: NACKIFG
       UCB0CTLW0 |= UCTXSTT;                  // I2C start condition
       break;
@@ -167,14 +113,12 @@ __interrupt void USCI_B0_ISR(void)
     case USCI_I2C_UCTXIFG2:  break;         // Vector 16: TXIFG2
     case USCI_I2C_UCRXIFG1:  break;         // Vector 18: RXIFG1
     case USCI_I2C_UCTXIFG1:  break;         // Vector 20: TXIFG1
-
     case USCI_I2C_UCRXIFG0:                 // Vector 22: RXIFG0
        if(UCB0I2CSA == TEMPERATURE_SENSOR_ADDRESS){
            gTemperature[byteIndex] = UCB0RXBUF;                   // Get RX data
        }
-       byteIndex++;
 
-       if(byteIndex == 3){
+       if(++byteIndex == 3){
            byteIndex = 0;
        }
       break;
