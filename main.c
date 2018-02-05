@@ -1,66 +1,82 @@
 #include "drivers/launchpad.h"
 #include "scheduler.h"
 #include "semaphor.h"
+#include "drivers/sensorDriver.h"
 
-#define NUMBER_OF_DISPLAY_MODES         3
+typedef enum {
+    DISPLAYMODE_CELSIUS,
+    DISPLAYMODE_FAHRENHEIT
+} DisplayMode_t;
 
-static void switchRedLEDThread(void);
+static DisplayMode_t displayMode;
+static Semaphor_t btnSemaphor;
+static Semaphor_t tempSemaphor;
+extern uint8_t gTemperature[3];
+
+static void readTempThread();
+static void showTempThread();
+static void buttonProducerThread();
+static void buttonConsumerThread();
 static void aliveThread();
-static Semaphor_t prodConsSemaphor;
-static Temperature_t temperature;
-static uint8_t displayMode;
 
+int main(void) {
+    displayMode = DISPLAYMODE_CELSIUS;
+    launchpad_init();
+    scheduler_init();
+    __enable_interrupt();
 
-/*
-int32_t temp;
-uint32_t tempAbs;
-uint16_t i;
+    semaphor_init(&tempSemaphor);
+    semaphor_init(&btnSemaphor);
+    scheduler_startThread(&readTempThread);
+    scheduler_startThread(&showTempThread);
+    scheduler_startThread(&buttonProducerThread);
+    scheduler_startThread(&buttonConsumerThread);
 
+    aliveThread();
+}
 
-
-temp = 17572 * (int32_t) tempSensorValue;     // fixed point -> all values multiplied by 100
-temp = temp / 65536;
-temp -= 4685;
-
-tempAbs = (uint32_t) temp / 10;     // remove second digit after comma
-*/
-
-static void switchRedLEDThread() {
+static void readTempThread() {
     while(1) {
-        switch (displayMode) {
-        case 0:
-            temperature = 1000;
-            launchpad_showTemperature(temperature, CELSIUS);
-            scheduler_threadSleep(500);
-            break;
-        case 1:
-            temperature = 1;
-            launchpad_showTemperature(temperature, CELSIUS);
-            launchpad_toggleRedLED();
-            scheduler_threadSleep(500);
-            break;
-        case 2:
-            launchpad_showTemperature(temperature, FAHRENHEIT);
-            launchpad_toggleRedLED();
-            scheduler_threadSleep(1000);
-            break;
-        default:
-            temperature = 0;
-            launchpad_clearDisplay();
-            launchpad_toggleRedLED();
-            break;
-        }
+        tempsensor_triggerMeasurement();
+        scheduler_threadSleep(100);
+        semaphor_V(&tempSemaphor);
     }
 }
 
-static void producerThread() {
+static void showTempThread() {
+    while(1) {
+        semaphor_P(&tempSemaphor);
+        int32_t sensorValue = gTemperature[0]*256 + gTemperature[1];
+        sensorValue *= 17572;
+        sensorValue /= 65536;
+        sensorValue -= 4685;
+        sensorValue /= 10;
+
+        switch (displayMode) {
+                case DISPLAYMODE_CELSIUS:
+                    launchpad_showTemperature(sensorValue, CELSIUS);
+                    break;
+                case DISPLAYMODE_FAHRENHEIT:
+                    sensorValue *= 18;
+                    sensorValue /= 10;
+                    sensorValue += 320;
+                    launchpad_showTemperature(sensorValue, FAHRENHEIT);
+                    break;
+                default:
+                    launchpad_clearDisplay();
+                    break;
+                }
+    }
+}
+
+static void buttonProducerThread() {
     static unsigned char oldBtnState = BTN_SHIFT;
 
     while(1) {
         unsigned char btnState = (BTN_PORT_IN & BTN_SHIFT);
         if(btnState != oldBtnState) {
             if(btnState == 0) {
-                semaphor_V(&prodConsSemaphor);
+                semaphor_V(&btnSemaphor);
             }
             oldBtnState = btnState;
         }
@@ -68,26 +84,11 @@ static void producerThread() {
     }
 }
 
-static void consumerThread() {
+static void buttonConsumerThread() {
     while(1) {
-        semaphor_P(&prodConsSemaphor);
-        displayMode = displayMode < NUMBER_OF_DISPLAY_MODES ? displayMode + 1 : 0;
+        semaphor_P(&btnSemaphor);
+        displayMode = displayMode == DISPLAYMODE_CELSIUS ? DISPLAYMODE_FAHRENHEIT : DISPLAYMODE_CELSIUS;
     }
-}
-
-int main(void) {
-    temperature = 0;
-    displayMode = 0;
-    launchpad_init();
-    scheduler_init();
-    __enable_interrupt();
-    scheduler_startThread(&switchRedLEDThread);
-
-    semaphor_init(&prodConsSemaphor);
-    scheduler_startThread(&producerThread);
-    scheduler_startThread(&consumerThread);
-
-    aliveThread();
 }
 
 static void aliveThread() {

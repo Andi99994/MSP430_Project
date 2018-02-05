@@ -29,6 +29,6 @@ void launchpad_toggleGreenLED();
 void launchpad_toggleRedLED();
 void launchpad_toggleRedLEDEnable();
 void launchpad_clearDisplay();
-void launchpad_showTemperature(Temperature_t temperature, TemperatureUnit_t unit);
+void launchpad_showTemperature(uint16_t sensorValue, TemperatureUnit_t unit);
 
 #endif /* LAUNCHPAD_H_ */
