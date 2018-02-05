@@ -18,5 +18,6 @@
 
 void sensorDriver_initI2C(void);
 int sensorDriver_measureTemperature(void);
+int16_t sensorDriver_readTemperature(void);
 
 #endif /* DRIVERS_SENSORDRIVER_H_ */

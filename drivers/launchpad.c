@@ -73,3 +73,7 @@ void launchpad_measureTemperature(void) {
     sensorDriver_measureTemperature();
 }
 
+int16_t launchpad_readTemperature(void) {
+    return sensorDriver_readTemperature();
+}
+

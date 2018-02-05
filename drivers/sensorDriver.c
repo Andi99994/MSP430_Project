@@ -31,6 +31,10 @@ void sensorDriver_initI2C(void) {
     UCB0IE |= UCRXIE | UCNACKIE | UCBCNTIFG;  // enable relevant interrupts
 }
 
+int16_t sensorDriver_readTemperature(void) {
+    return gTemperature[0]*256 + gTemperature[1];
+}
+
 int sensorDriver_measureTemperature(void) {
     uint8_t write_cmd[1] = {0xF3};
     I2CData_t data = { .tx_buf = &write_cmd, .tx_len = 1 };

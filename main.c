@@ -1,16 +1,24 @@
+/**
+ * main.c
+ *
+ * This file implements the main entry point of the program and some simple application logic.
+ * All threads are implemented here.
+ *
+ */
+
 #include "drivers/launchpad.h"
 #include "scheduler.h"
 #include "semaphor.h"
 
-typedef enum {
+typedef enum {                                              //Defines the different display modes to be shown on the display
     DISPLAYMODE_CELSIUS,
     DISPLAYMODE_FAHRENHEIT
 } DisplayMode_t;
 
-static DisplayMode_t displayMode;
-static Semaphor_t btnSemaphor;
-static Semaphor_t tempSemaphor;
-extern uint8_t gTemperature[3];
+static DisplayMode_t displayMode;                           //Defines the currently active display mode
+static Semaphor_t btnSemaphor;                              //Defines the producer/consumer semaphor used for the button and switching of display modes
+static Semaphor_t tempSemaphor;                             //Defines the producer/consumer semaphor used for reading and displaying temperature
+extern uint8_t gTemperature[3];                             //Externally links the temperature
 
 static void readTempThread(void);
 static void showTempThread(void);
@@ -45,7 +53,7 @@ static void readTempThread(void) {
 static void showTempThread(void) {
     while(1) {
         semaphor_P(&tempSemaphor);
-        int32_t sensorValue = gTemperature[0]*256 + gTemperature[1];
+        int32_t sensorValue = launchpad_readTemperature();
         sensorValue *= 17572;
         sensorValue /= 65536;
         sensorValue -= 4685;
