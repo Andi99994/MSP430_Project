@@ -7,7 +7,7 @@
 
 #include "LEDDriver.h"
 
-void led_init() {
+void led_init(void) {
     LED_RED_DIR |= LED_RED_SHIFT;
     LED_GREEN_DIR |= LED_GREEN_SHIFT;
 

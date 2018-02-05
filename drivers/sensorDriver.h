@@ -23,6 +23,7 @@ struct i2c_data {
     size_t rx_len;
 };
 
+void sensorDriver_initI2C(void);
 int tempsensor_triggerMeasurement(void);
 
 int i2c_check_ack(const uint8_t deviceAddress);

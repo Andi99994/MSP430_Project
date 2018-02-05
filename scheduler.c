@@ -4,13 +4,13 @@
 static Thread_t gThreads[THREADPOOL_SIZE];
 static ThreadID_t gRunningThread = 0;
 
-static ThreadID_t scheduler_getNextOpenSlot();
-static ThreadID_t scheduler_getPendingThread();
-static void scheduler_killThread();
+static ThreadID_t scheduler_getNextOpenSlot(void);
+static ThreadID_t scheduler_getPendingThread(void);
+static void scheduler_killThread(void);
 
 void timerCallback(uint16_t time);
 
-void scheduler_init() {
+void scheduler_init(void) {
     unsigned int i;
     for(i = 0; i < THREADPOOL_SIZE; i++) {
         gThreads[i].state = THREADSTATE_INVALID;
@@ -42,11 +42,11 @@ ThreadID_t scheduler_startThread(ThreadFunction_t function) {
     }
 }
 
-ThreadID_t scheduler_getRunningThread() {
+ThreadID_t scheduler_getRunningThread(void) {
     return gRunningThread;
 }
 
-void scheduler_runNextThread() {
+void scheduler_runNextThread(void) {
     unsigned short s;
     ATOMIC_START(s);
     ThreadID_t nextThread = scheduler_getPendingThread();
@@ -78,7 +78,7 @@ void scheduler_threadSleep(uint16_t sleepTime) {
     scheduler_runNextThread();
 }
 
-static ThreadID_t scheduler_getPendingThread() {
+static ThreadID_t scheduler_getPendingThread(void) {
     unsigned int i = gRunningThread;
     do {
         i = (i + 1) % THREADPOOL_SIZE;
@@ -102,7 +102,7 @@ static ThreadID_t scheduler_getNextOpenSlot() {
     return THREAD_ID_INVALID;
 }
 
-static void scheduler_killThread() {
+static void scheduler_killThread(void) {
     unsigned short s;
     ATOMIC_START(s);
     gThreads[gRunningThread].state = THREADSTATE_INVALID;

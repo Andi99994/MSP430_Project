@@ -1,7 +1,6 @@
 #include "drivers/launchpad.h"
 #include "scheduler.h"
 #include "semaphor.h"
-#include "drivers/sensorDriver.h"
 
 typedef enum {
     DISPLAYMODE_CELSIUS,
@@ -13,11 +12,11 @@ static Semaphor_t btnSemaphor;
 static Semaphor_t tempSemaphor;
 extern uint8_t gTemperature[3];
 
-static void readTempThread();
-static void showTempThread();
-static void buttonProducerThread();
-static void buttonConsumerThread();
-static void aliveThread();
+static void readTempThread(void);
+static void showTempThread(void);
+static void buttonProducerThread(void);
+static void buttonConsumerThread(void);
+static void aliveThread(void);
 
 int main(void) {
     displayMode = DISPLAYMODE_CELSIUS;
@@ -35,15 +34,15 @@ int main(void) {
     aliveThread();
 }
 
-static void readTempThread() {
+static void readTempThread(void) {
     while(1) {
-        tempsensor_triggerMeasurement();
+        launchpad_measureTemperature();
         scheduler_threadSleep(100);
         semaphor_V(&tempSemaphor);
     }
 }
 
-static void showTempThread() {
+static void showTempThread(void) {
     while(1) {
         semaphor_P(&tempSemaphor);
         int32_t sensorValue = gTemperature[0]*256 + gTemperature[1];
@@ -53,23 +52,23 @@ static void showTempThread() {
         sensorValue /= 10;
 
         switch (displayMode) {
-                case DISPLAYMODE_CELSIUS:
-                    launchpad_showTemperature(sensorValue, CELSIUS);
-                    break;
-                case DISPLAYMODE_FAHRENHEIT:
-                    sensorValue *= 18;
-                    sensorValue /= 10;
-                    sensorValue += 320;
-                    launchpad_showTemperature(sensorValue, FAHRENHEIT);
-                    break;
-                default:
-                    launchpad_clearDisplay();
-                    break;
-                }
+        case DISPLAYMODE_CELSIUS:
+            launchpad_showTemperature(sensorValue, CELSIUS);
+            break;
+        case DISPLAYMODE_FAHRENHEIT:
+            sensorValue *= 18;
+            sensorValue /= 10;
+            sensorValue += 320;
+            launchpad_showTemperature(sensorValue, FAHRENHEIT);
+            break;
+        default:
+            launchpad_clearDisplay();
+            break;
+        }
     }
 }
 
-static void buttonProducerThread() {
+static void buttonProducerThread(void) {
     static unsigned char oldBtnState = BTN_SHIFT;
 
     while(1) {
@@ -84,14 +83,14 @@ static void buttonProducerThread() {
     }
 }
 
-static void buttonConsumerThread() {
+static void buttonConsumerThread(void) {
     while(1) {
         semaphor_P(&btnSemaphor);
         displayMode = displayMode == DISPLAYMODE_CELSIUS ? DISPLAYMODE_FAHRENHEIT : DISPLAYMODE_CELSIUS;
     }
 }
 
-static void aliveThread() {
+static void aliveThread(void) {
     while(1) {
         launchpad_toggleGreenLED();
         scheduler_threadSleep(500);

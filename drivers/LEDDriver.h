@@ -33,6 +33,6 @@
 #define LED_RED_TOGGLE_ENABLE       LED_RED_DIR ^= LED_RED_SHIFT
 
 
-void led_init();
+void led_init(void);
 
 #endif /* LEDDRIVER_H_ */

@@ -3,6 +3,18 @@
 uint8_t cnt = 0;
 uint8_t gTemperature[3];
 
+void sensorDriver_initI2C(void) {
+    P1SEL0 |= I2C_SDA_PIN + I2C_SCL_PIN;      // route i2c pins
+    UCB0CTLW0 |= UCSWRST;                     // enter sw reset mode (holds i2c module)
+    UCB0CTLW0 |= UCMST | UCMODE_3 | UCSYNC;   // master mode, i2c mode, synchronous mode
+    UCB0CTLW0 |= UCSSEL_2;                    // use SMCLK
+    UCB0CTLW1 |= UCASTP_2;                    // generate stop condition if byte counter UCB0TBCNT reached
+    UCB0BRW = 4;                              // fSCL = SMCLK/4 = 250kHz
+    UCB0TBCNT = 0x03;                         // generate stop condition after 3 bytes
+    UCB0I2CSA = 0x40;                         // slave Address (temp+humidity sensor SHT21)
+    UCB0CTLW0 &= ~UCSWRST;                    // clear SW reset (i2c module resumes operation)
+    UCB0IE |= UCRXIE | UCNACKIE | UCBCNTIFG;  // enable relevant interrupts
+}
 
 int tempsensor_reset(void) {
     int err;
