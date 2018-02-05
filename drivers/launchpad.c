@@ -5,7 +5,6 @@
 
 static uint32_t gSystemTicks = 0;
 
-static void launchpad_initButton(void);
 static void launchpad_initTimer(void);
 
 extern void timerCallback();
@@ -16,15 +15,9 @@ void launchpad_init(void) {
 
     ledDriver_init();
     displayDriver_init();
-    launchpad_initButton();
+    buttonDriver_init();
     launchpad_initTimer();
     sensorDriver_initI2C();
-}
-
-static void launchpad_initButton(void) {
-    BTN_PORT_REN |= BTN_SHIFT;
-    BTN_PORT_OUT |= BTN_SHIFT;
-    BTN_PORT_DIR &= ~BTN_SHIFT;
 }
 
 static void launchpad_initTimer(void) {
@@ -75,5 +68,9 @@ void launchpad_measureTemperature(void) {
 
 int16_t launchpad_readTemperature(void) {
     return sensorDriver_readTemperature();
+}
+
+unsigned char launchpad_getButtonState(void) {
+    return BTN_STATE;
 }
 

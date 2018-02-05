@@ -6,15 +6,8 @@
 #include <intrinsics.h>
 #include "displayDriver.h"
 #include "sensorDriver.h"
+#include "buttonDriver.h"
 
-#define BTN                         1
-#define BTN_PORT_DIR                P1DIR
-#define BTN_PORT_IN                 P1IN
-#define BTN_PORT_REN                P1REN
-#define BTN_PORT_OUT                P1OUT
-#define BTN_SHIFT                   (1 << BTN)
-
-#define BTN_DEBOUNCE_TIME           50
 #define LAUNCHPAD_TIMER_INTERVAL    50
 
 #define THREADPOOL_SIZE             5
@@ -33,5 +26,6 @@ void launchpad_clearDisplay(void);
 void launchpad_showTemperature(uint16_t sensorValue, TemperatureUnit_t unit);
 void launchpad_measureTemperature(void);
 int16_t launchpad_readTemperature(void);
+unsigned char launchpad_getButtonState(void);
 
 #endif /* LAUNCHPAD_H_ */
