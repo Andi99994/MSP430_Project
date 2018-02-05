@@ -24,14 +24,13 @@ struct i2c_data {
 };
 
 void sensorDriver_initI2C(void);
-int tempsensor_triggerMeasurement(void);
-
-int i2c_check_ack(const uint8_t deviceAddress);
-int i2c_receive(const uint8_t deviceAddress, uint8_t *buf, size_t nbytes);
-int i2c_transmit(const uint8_t deviceAdress, const uint8_t *buf, size_t nbytes);
-int i2c_transfer(const uint8_t deviceAddress, struct i2c_data *data);
-int tempsensor_readValue(uint8_t rx_data[]);
-int tempsensor_reset(void);
+int sensorDriver_measureTemperature(void);
+int sensorDriver_checkI2CAck(const uint8_t deviceAddress);
+int sensorDriver_receiveI2C(const uint8_t deviceAddress, uint8_t *buf, size_t nbytes);
+int sensorDriver_transmitI2C(const uint8_t deviceAdress, const uint8_t *buf, size_t nbytes);
+int sensorDriver_transferI2C(const uint8_t deviceAddress, struct i2c_data *data);
+int sensorDriver_readTemperatureValue(uint8_t rx_data[]);
+int sensorDriver_resetTemperatureSensor(void);
 
 
 #endif /* DRIVERS_SENSORDRIVER_H_ */

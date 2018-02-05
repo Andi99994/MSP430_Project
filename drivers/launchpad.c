@@ -14,8 +14,8 @@ void launchpad_init(void) {
     WDTCTL = WDTPW | WDTHOLD;  // stop watchdog timer
     PM5CTL0 &= ~LOCKLPM5; // power manager - turn on module
 
-    led_init();
-    display_init();
+    ledDriver_init();
+    displayDriver_init();
     launchpad_initButton();
     launchpad_initTimer();
     sensorDriver_initI2C();
@@ -62,7 +62,7 @@ void launchpad_toggleRedLEDEnable(void) {
 }
 
 void launchpad_showTemperature(uint16_t sensorValue, TemperatureUnit_t unit) {
-    display_showTemperature(sensorValue, unit);
+    displayDriver_showTemperature(sensorValue, unit);
 }
 
 void launchpad_clearDisplay(void) {
@@ -70,6 +70,6 @@ void launchpad_clearDisplay(void) {
 }
 
 void launchpad_measureTemperature(void) {
-    tempsensor_triggerMeasurement();
+    sensorDriver_measureTemperature();
 }
 

@@ -96,11 +96,11 @@ static uint8_t symbolTable[39] = {
                    0x01
 };
 
-static void display_showSymbol(uint16_t pos, Symbol_t symbol);
-static Symbol_t display_resolveDigitToSymbol(uint8_t digit);
-static Symbol_t display_resolveUnitToSymbol(TemperatureUnit_t unit);
+static void displayDriver_showSymbol(uint16_t pos, Symbol_t symbol);
+static Symbol_t displayDriver_resolveDigitToSymbol(uint8_t digit);
+static Symbol_t displayDriver_resolveUnitToSymbol(TemperatureUnit_t unit);
 
-void display_init(void){
+void displayDriver_init(void){
     LCDCPCTL1 |= LCDS18 | LCDS19;
     LCDCPCTL0 |= LCDS10 | LCDS11;
     LCDCPCTL0 |= LCDS6 | LCDS7 | LCDS8;
@@ -118,7 +118,7 @@ void display_init(void){
 }
 
 
-static void display_showSymbol(uint16_t pos, Symbol_t symbol){
+static void displayDriver_showSymbol(uint16_t pos, Symbol_t symbol){
 
     uint8_t digitCode = symbolTable[symbol];
 
@@ -159,28 +159,28 @@ static void display_showSymbol(uint16_t pos, Symbol_t symbol){
 }
 
 
-void display_showTemperature(Temperature_t temperature, TemperatureUnit_t unit){
+void displayDriver_showTemperature(Temperature_t temperature, TemperatureUnit_t unit){
     DISPLAY_CLEAR;
 
     if(temperature < 0) {
         temperature = -temperature;
-        display_showSymbol(NEGATIVE_POS, SYMBOL_NEGATIVE);
+        displayDriver_showSymbol(NEGATIVE_POS, SYMBOL_NEGATIVE);
     }
 
     unsigned int i = 0;
     for(i = 4; i>= 1; i--){
-        display_showSymbol(i, display_resolveDigitToSymbol(temperature % 10));
+        displayDriver_showSymbol(i, displayDriver_resolveDigitToSymbol(temperature % 10));
         temperature /= 10;
         if(!temperature){
             break;
         }
     }
-    display_showSymbol(DECIMAL_POS, SYMBOL_DECIMAL);
-    display_showSymbol(DEGREE_POS, SYMBOL_DEGREE);
-    display_showSymbol(UNIT_POS, display_resolveUnitToSymbol(unit));
+    displayDriver_showSymbol(DECIMAL_POS, SYMBOL_DECIMAL);
+    displayDriver_showSymbol(DEGREE_POS, SYMBOL_DEGREE);
+    displayDriver_showSymbol(UNIT_POS, displayDriver_resolveUnitToSymbol(unit));
 }
 
-Symbol_t display_resolveDigitToSymbol(uint8_t digit) {
+Symbol_t displayDriver_resolveDigitToSymbol(uint8_t digit) {
     switch(digit) {
     case 0:
         return SYMBOL_0;
@@ -207,7 +207,7 @@ Symbol_t display_resolveDigitToSymbol(uint8_t digit) {
     }
 }
 
-Symbol_t display_resolveUnitToSymbol(TemperatureUnit_t unit) {
+Symbol_t displayDriver_resolveUnitToSymbol(TemperatureUnit_t unit) {
     switch(unit) {
     case CELSIUS:
         return SYMBOL_C;

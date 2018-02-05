@@ -20,7 +20,7 @@ typedef enum {
     FAHRENHEIT
 } TemperatureUnit_t;
 
-void display_init(void);
-void display_showTemperature(Temperature_t temperature, TemperatureUnit_t unit);
+void displayDriver_init(void);
+void displayDriver_showTemperature(Temperature_t temperature, TemperatureUnit_t unit);
 
 #endif /* DISPLAYDRIVER_H_ */

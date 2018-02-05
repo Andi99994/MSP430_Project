@@ -16,7 +16,7 @@ void sensorDriver_initI2C(void) {
     UCB0IE |= UCRXIE | UCNACKIE | UCBCNTIFG;  // enable relevant interrupts
 }
 
-int tempsensor_reset(void) {
+int sensorDriver_resetTemperatureSensor(void) {
     int err;
     static const uint8_t deviceAddress = 0x40;
     struct i2c_data data;
@@ -29,13 +29,13 @@ int tempsensor_reset(void) {
     data.rx_buf = NULL;
     data.rx_len = 0;
 
-    err = i2c_transfer(deviceAddress, &data);
+    err = sensorDriver_transferI2C(deviceAddress, &data);
     UCB0CTLW0 |= UCTXSTP;
 
     return err;
 }
 
-int tempsensor_readValue(uint8_t rx_data[]) {
+int sensorDriver_readTemperatureValue(uint8_t rx_data[]) {
     int err;
     uint8_t deviceAddress = 0x40;
     struct i2c_data data;
@@ -45,12 +45,12 @@ int tempsensor_readValue(uint8_t rx_data[]) {
     data.rx_buf = (uint8_t *) rx_data;
     data.rx_len = 3;
 
-    err = i2c_transfer(deviceAddress, &data);
+    err = sensorDriver_transferI2C(deviceAddress, &data);
 
     return err;
 }
 
-int tempsensor_triggerMeasurement(void) {
+int sensorDriver_measureTemperature(void) {
     int err;
     static const uint8_t deviceAddress = 0x40;
     struct i2c_data data;
@@ -62,14 +62,14 @@ int tempsensor_triggerMeasurement(void) {
     data.rx_buf = NULL;
     data.rx_len = 0;
 
-    err = i2c_transfer(deviceAddress, &data);
+    err = sensorDriver_transferI2C(deviceAddress, &data);
     UCB0CTLW0 &= ~UCTR;
     UCB0CTLW0 |= UCTXSTT;
     return err;
 }
 
 //TODO is deviceAddress needed here?
-int i2c_check_ack(const uint8_t deviceAddress) {
+int sensorDriver_checkI2CAck(const uint8_t deviceAddress) {
     int err = 0;
 
     /* Check for ACK */
@@ -87,7 +87,7 @@ int i2c_check_ack(const uint8_t deviceAddress) {
     return err;
 }
 
-int i2c_receive(const uint8_t deviceAddress, uint8_t *buf, size_t nbytes) {
+int sensorDriver_receiveI2C(const uint8_t deviceAddress, uint8_t *buf, size_t nbytes) {
     int err = 0;
 
     /* Send the start and wait */
@@ -106,7 +106,7 @@ int i2c_receive(const uint8_t deviceAddress, uint8_t *buf, size_t nbytes) {
     }
 
     /* Check for ACK */
-    err = i2c_check_ack(deviceAddress);
+    err = sensorDriver_checkI2CAck(deviceAddress);
 
     /* If no error and bytes left to receive, receive the data */
     while ((err == 0) && (nbytes > 0)) {
@@ -133,7 +133,7 @@ int i2c_receive(const uint8_t deviceAddress, uint8_t *buf, size_t nbytes) {
     return err;
 }
 
-int i2c_transmit(const uint8_t deviceAddress, const uint8_t *buf, size_t nbytes) {
+int sensorDriver_transmitI2C(const uint8_t deviceAddress, const uint8_t *buf, size_t nbytes) {
     int err = 0;
 
     /* Send the start condition */
@@ -143,7 +143,7 @@ int i2c_transmit(const uint8_t deviceAddress, const uint8_t *buf, size_t nbytes)
     while ( (UCB0CTLW0 & UCTXSTT) && ( (UCB0IFG & UCTXIFG0) == 0) );
 
     /* Check for ACK */
-    err = i2c_check_ack(deviceAddress);
+    err = sensorDriver_checkI2CAck(deviceAddress);
 
     /* If no error and bytes left to send, transmit the data */
     while ((err == 0) && (nbytes > 0)) {
@@ -153,7 +153,7 @@ int i2c_transmit(const uint8_t deviceAddress, const uint8_t *buf, size_t nbytes)
             //UCB0CTLW0 |= UCTR | UCTXSTT;
             //UCB0TXBUF = *buf;
 
-            err = i2c_check_ack(deviceAddress);
+            err = sensorDriver_checkI2CAck(deviceAddress);
             if (err < 0) {
                 break;
             }
@@ -166,7 +166,7 @@ int i2c_transmit(const uint8_t deviceAddress, const uint8_t *buf, size_t nbytes)
     return err;
 }
 
-int i2c_transfer(const uint8_t deviceAddress, struct i2c_data *data) {
+int sensorDriver_transferI2C(const uint8_t deviceAddress, struct i2c_data *data) {
     int err = 0;
 
     /* Set the slave device address */
@@ -174,12 +174,12 @@ int i2c_transfer(const uint8_t deviceAddress, struct i2c_data *data) {
 
     /* Transmit data if there is any */
     if (data->tx_len > 0) {
-        err = i2c_transmit(deviceAddress, (const uint8_t *) data->tx_buf, data->tx_len);
+        err = sensorDriver_transmitI2C(deviceAddress, (const uint8_t *) data->tx_buf, data->tx_len);
     }
 
     /* Receive data if there is any */
     if ((err == 0) && (data->rx_len > 0)) {
-        err = i2c_receive(deviceAddress, (uint8_t *) data->rx_buf, data->rx_len);
+        err = sensorDriver_receiveI2C(deviceAddress, (uint8_t *) data->rx_buf, data->rx_len);
     } else {
         /* No bytes to receive send the stop condition */
        //UCB0CTLW0 |= UCTXSTP;
