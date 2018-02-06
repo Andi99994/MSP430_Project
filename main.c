@@ -108,6 +108,7 @@ static void showTempThread(void) {
 
 /**
  * This thread listens for a button press and releases the semaphor of the button consumer thread if it detects one.
+ * Note: The button does not work 100% reliable, but for this application it is sufficient.
  */
 static void buttonProducerThread(void) {
     static unsigned char oldBtnState = BTN_SHIFT;

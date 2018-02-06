@@ -1,17 +1,19 @@
 /*
  * DisplayDriver.c
  *
- *  Created on: 01.02.2018
- *      Author: andre
+ * This file implements all functionality of the display required for the application.
+ *
  */
 
 #include "DisplayDriver.h"
 
+//Defines some display constants to displayed in certain segments.
 #define NEGATIVE_POS        101
 #define DEGREE_POS          102
 #define UNIT_POS            103
 #define DECIMAL_POS         104
 
+//Defines all currently required symbols. Note: Not every symbol is compatible with every segment.
 typedef enum {
     SYMBOL_0,
     SYMBOL_1,
@@ -54,6 +56,7 @@ typedef enum {
     SYMBOL_DECIMAL
 } Symbol_t;
 
+//Defines all symbol codes required. Note: These have to be in the same order as the Symbol_t enum.
 static uint8_t symbolTable[39] = {
                    0xFC,
                    0x60,
@@ -96,10 +99,24 @@ static uint8_t symbolTable[39] = {
                    0x01
 };
 
-static void displayDriver_showSymbol(uint16_t pos, Symbol_t symbol);
+/**
+ * Displays a single symbol on the specified segment index.
+ */
+static void displayDriver_showSymbol(uint16_t segmentIndex, Symbol_t symbol);
+
+/**
+ * Converts an integer to a Symbol. Any number exceeding 9 will be shown as 0.
+ */
 static Symbol_t displayDriver_resolveDigitToSymbol(uint8_t digit);
+
+/**
+ * Converts a unit to a symbol.
+ */
 static Symbol_t displayDriver_resolveUnitToSymbol(TemperatureUnit_t unit);
 
+/**
+ * Initializes all required LCD segments and clears the display initially.
+ */
 void displayDriver_init(void){
     LCDCPCTL1 |= LCDS18 | LCDS19;
     LCDCPCTL0 |= LCDS10 | LCDS11;
@@ -117,69 +134,71 @@ void displayDriver_init(void){
     DISPLAY_CLEAR;
 }
 
+/**
+ * Displays a single symbol on the specified segment index.
+ */
+static void displayDriver_showSymbol(uint16_t segmentIndex, Symbol_t symbol){
 
-static void displayDriver_showSymbol(uint16_t pos, Symbol_t symbol){
+    uint8_t digitCode = symbolTable[symbol];                //Resolve symbol to symbol code
 
-    uint8_t digitCode = symbolTable[symbol];
-
-    switch(pos){
+    switch(segmentIndex){
         case 1:
-            LCDM10 = digitCode;   // LCDM10 -> S19/S18
+            LCDM10 = digitCode;
             break;
         case 2:
-            LCDM6 = digitCode;    // LCDM6 -> S11/S10
+            LCDM6 = digitCode;
             break;
         case 3:
-            LCDM4 = digitCode;    // LCDM4 -> S7/S6
+            LCDM4 = digitCode;
             break;
         case 4:
-            LCDM19 = digitCode;   // LCDM19 -> S37/S36
-            break;
-        case 5:
-            LCDM15 = digitCode;   // LCDM15 -> S29/S28
-            break;
-        case 6:
-            LCDM8 = digitCode;    // LCDM8 -> S15/S14
+            LCDM19 = digitCode;
             break;
         case DECIMAL_POS:
-            LCDM5 |= digitCode;        // LCDM5 -> S9/S8, A3 decimal point
+            LCDM5 |= digitCode;
             break;
         case NEGATIVE_POS:
-            LCDM11 |= digitCode;       // LCDM11 -> S21/S20, negative symbol
+            LCDM11 |= digitCode;
             break;
         case DEGREE_POS:
-            LCDM16 = digitCode;        // LCDM16 -> S31/S30, ° symbol
+            LCDM16 = digitCode;
             break;
         case UNIT_POS:
-            LCDM8 = digitCode;         // LCDM8 -> S15/S14, A6 symbol unit
+            LCDM8 = digitCode;
             break;
         default:
             break;
     }
 }
 
-
+/**
+ * Display a temperature of specified unit on the LCD display. The temperature has one decimal place multiplied by 10 (20,1°C = 201 here) and can range
+ * from -9999 to +9999 (= -999.9° to +999.9°). Any overflowing places will be truncated and not displayed.
+ */
 void displayDriver_showTemperature(Temperature_t temperature, TemperatureUnit_t unit){
-    DISPLAY_CLEAR;
+    DISPLAY_CLEAR;                                                                          //Clear display initially
 
-    if(temperature < 0) {
+    if(temperature < 0) {                                                                   //If temperature is negative, show negative symbol and invert temperature
         temperature = -temperature;
         displayDriver_showSymbol(NEGATIVE_POS, SYMBOL_NEGATIVE);
     }
 
     unsigned int i = 0;
-    for(i = 4; i>= 1; i--){
-        displayDriver_showSymbol(i, displayDriver_resolveDigitToSymbol(temperature % 10));
-        temperature /= 10;
-        if(!temperature){
+    for(i = 4; i > 0; i--){                                                                 //Iterate through 4 numbers displayable
+        displayDriver_showSymbol(i, displayDriver_resolveDigitToSymbol(temperature % 10));  //Show the rightmost digit
+        temperature /= 10;                                                                  //Truncate the temperature to remove the already displaying digit
+        if(temperature == 0){                                                               //If there are no digits left, stop
             break;
         }
     }
-    displayDriver_showSymbol(DECIMAL_POS, SYMBOL_DECIMAL);
-    displayDriver_showSymbol(DEGREE_POS, SYMBOL_DEGREE);
-    displayDriver_showSymbol(UNIT_POS, displayDriver_resolveUnitToSymbol(unit));
+    displayDriver_showSymbol(DECIMAL_POS, SYMBOL_DECIMAL);                                  //Display decimal point
+    displayDriver_showSymbol(DEGREE_POS, SYMBOL_DEGREE);                                    //Display degree symbol
+    displayDriver_showSymbol(UNIT_POS, displayDriver_resolveUnitToSymbol(unit));            //Display unit symbol
 }
 
+/**
+ * Converts an integer to a Symbol. Any number exceeding 9 will be shown as 0.
+ */
 Symbol_t displayDriver_resolveDigitToSymbol(uint8_t digit) {
     switch(digit) {
     case 0:
@@ -207,6 +226,9 @@ Symbol_t displayDriver_resolveDigitToSymbol(uint8_t digit) {
     }
 }
 
+/**
+ * Converts a unit to a symbol.
+ */
 Symbol_t displayDriver_resolveUnitToSymbol(TemperatureUnit_t unit) {
     switch(unit) {
     case CELSIUS:
